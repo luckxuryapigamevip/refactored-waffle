@@ -7,15 +7,14 @@ const { v4: uuidv4 } = require('uuid');
 const TELEGRAM_TOKEN = '8899402629:AAEP1obdz_SdGP_4N1cG73KYBmjFvOLvlPY'; // Thay token bot của bạn vào đây
 const LINK4M_API_TOKEN = '6add63fc9e27f139127d2a92'; // API Token Link4M của bạn
 const PORT = process.env.PORT || 3000;
-const SERVER_URL = 'https://refactored-waffle-tjw7.onrender.com'; // Link Render của bạn
-const FRONTEND_URL = 'https://comforting-elf-d5535a.netlify.app/index.html'; // Link Netlify của bạn
+const SERVER_URL = 'https://refactored-waffle-tjw7.onrender.com';
+const FRONTEND_URL = 'https://comforting-elf-d5535a.netlify.app/index.html';
 const DATA_FILE = './keys.json';
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 const app = express();
 app.use(express.json());
 
-// --- QUẢN LÝ DATABASE JSON ---
 function readData() {
     if (!fs.existsSync(DATA_FILE)) {
         fs.writeFileSync(DATA_FILE, JSON.stringify({}, null, 2));
@@ -27,21 +26,21 @@ function writeData(data) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
-// --- HÀM TẠO LINK RÚT GỌN LINK4M (ĐÃ TỐI ƯU & GHI LOG) ---
+// --- HÀM TẠO LINK RÚT GỌN LINK4M (ĐÃ SỬA ĐÚNG ENDPOINT V2) ---
 async function createLink4M(longUrl) {
     try {
-        const apiLink = `https://link4m.com/api?api=${LINK4M_API_TOKEN}&url=${encodeURIComponent(longUrl)}`;
+        // Cập nhật đúng URL endpoint từ tài liệu Link4M của bạn
+        const apiLink = `https://link4m.co/api-shorten/v2?api=${LINK4M_API_TOKEN}&url=${encodeURIComponent(longUrl)}`;
         const response = await fetch(apiLink);
         const data = await response.json();
         
-        // In log ra màn hình Render để dễ kiểm tra nếu có lỗi
         console.log("Phản hồi từ Link4M API:", data);
 
-        // Hỗ trợ kiểm tra các định dạng trả về thường gặp của Link4M
-        if (data.status === 'success' || data.shortenedUrl || data.url) {
-            return data.shortenedUrl || data.url;
+        // Theo tài liệu Link4M trả về: {"status":"success","shortenedUrl":"https://..."}
+        if (data.status === 'success' && data.shortenedUrl) {
+            return data.shortenedUrl;
         } else {
-            console.error('Link4M trả về lỗi:', data.message || data);
+            console.error('Link4M trả về lỗi:', data);
             return null;
         }
     } catch (error) {
@@ -59,16 +58,14 @@ bot.onText(/\/getkey/, async (msg) => {
     const now = Date.now();
     let userRecord = db[userId];
 
-    // Kiểm tra nếu chưa có key hoặc key đã quá hạn 12h
     if (!userRecord || userRecord.expires_at < now) {
         bot.sendMessage(chatId, `⏳ Đang tạo link vượt quảng cáo mới cho bạn, vui lòng đợi một chút...`);
 
-        // Link đích trỏ về server xác thực
         const targetUrl = `${SERVER_URL}/api/generate?userid=${userId}`;
         const shortLink = await createLink4M(targetUrl);
 
         if (!shortLink) {
-            return bot.sendMessage(chatId, `❌ Lỗi hệ thống: Không thể tạo link rút gọn từ Link4M. Vui lòng kiểm tra lại API Token hoặc thử lại sau!`);
+            return bot.sendMessage(chatId, `❌ Lỗi hệ thống: Không thể tạo link rút gọn từ Link4M. Vui lòng thử lại sau!`);
         }
 
         bot.sendMessage(chatId, 
@@ -77,7 +74,6 @@ bot.onText(/\/getkey/, async (msg) => {
             { parse_mode: 'Markdown' }
         );
     } else {
-        // Key vẫn còn hạn
         const remainingMinutes = Math.ceil((userRecord.expires_at - now) / (1000 * 60));
         bot.sendMessage(chatId, 
             `✅ **Key hiện tại của bạn vẫn còn hạn:**\n` +
@@ -100,7 +96,6 @@ app.get('/api/generate', (req, res) => {
     let db = readData();
     const now = Date.now();
 
-    // Tạo key mới thời hạn chính xác 12 tiếng
     const newKey = 'KEY-' + uuidv4().toUpperCase();
     const expirationTime = now + (12 * 60 * 60 * 1000); 
     const expireString = new Date(expirationTime).toLocaleString();
@@ -113,7 +108,6 @@ app.get('/api/generate', (req, res) => {
 
     writeData(db);
 
-    // Chuyển hướng sang trang Netlify kèm theo key mới và userid
     res.redirect(`${FRONTEND_URL}?key=${newKey}&userid=${userId}`);
 });
 
@@ -141,7 +135,6 @@ app.get('/api/send-key-telegram', async (req, res) => {
     }
 });
 
-// Khởi chạy server
 app.listen(PORT, () => {
     console.log(`🚀 Hệ thống Server đang chạy tại cổng ${PORT}`);
 });
