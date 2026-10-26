@@ -3,7 +3,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
-const TELEGRAM_TOKEN = '8899402629:AAFnNM6lxJPc1aQg6kXbG_f79PEvdoTb6sk'; // Token của @buykeyvipweb_bot
+const TELEGRAM_TOKEN = '8899402629:AAEP1obdz_SdGP_4N1cG73KYBmjFvOLvlPY'; // Token của @buykeyvipweb_bot
 const LINK4M_API_TOKEN = '6add63fc9e27f139127d2a92';
 const PORT = 3000;
 const SERVER_URL = 'https://domain-cua-ban.com'; 
