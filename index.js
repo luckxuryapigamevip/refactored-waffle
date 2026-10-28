@@ -8,7 +8,7 @@ const TELEGRAM_TOKEN = '8899402629:AAEP1obdz_SdGP_4N1cG73KYBmjFvOLvlPY'; // Thay
 const LINK4M_API_TOKEN = '6add63fc9e27f139127d2a92'; // API Token Link4M của bạn
 const PORT = process.env.PORT || 3000;
 const SERVER_URL = 'https://refactored-waffle-tjw7.onrender.com';
-const FRONTEND_URL = 'https://comforting-elf-d5535a.netlify.app/index.html';
+const FRONTEND_URL = 'https://mellifluous-pixie-d6ae5f.netlify.app';
 const DATA_FILE = './keys.json';
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
